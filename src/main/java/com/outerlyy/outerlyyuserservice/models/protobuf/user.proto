@@ -1,0 +1,20 @@
+syntax = "proto3";
+package user;
+
+option java_package = "com.outerlyy.outerlyyuserservice.models.generated";
+option java_outer_classname = "User";
+option java_multiple_files = true;
+
+message OuterlyyUser {
+    string username = 1;
+    string password = 2;
+    string firstName = 3;
+    string lastName = 4;
+    
+    message Location {
+        float long = 1;
+        float lat = 2;
+    }
+    Location location = 6;
+
+}

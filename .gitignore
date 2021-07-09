@@ -38,4 +38,4 @@ out/
 .DS_Store
 
 ### Protobuf generated files
-src/main/java/com/outerlyy/outerlyyuserservice/models/
+src/main/java/com/outerlyy/outerlyyuserservice/models/generated
