@@ -1,14 +1,16 @@
 package com.outerlyy.outerlyyuserservice.resources;
 
-import java.util.concurrent.CompletableFuture;
-
-import com.outerlyy.outerlyyuserservice.models.generated.EchoRequest;
+import com.outerlyy.outerlyyuserservice.models.generated.OuterlyyUser;
 import com.outerlyy.outerlyyuserservice.services.UserService;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import reactor.core.publisher.Mono;
 
 
 @RestController
@@ -27,18 +29,14 @@ public class UserResources {
      * @param username
      * @return
      */
-    // @GetMapping(path = "/{username}", produces = "application/json")
-    // @RequestMapping("/{username}")
     @GetMapping("/{username}")
-    public CompletableFuture<String> get(@PathVariable String username) {
-        return userService.get(username);
+    public Mono<OuterlyyUser> get(@PathVariable String username) {
+        return userService.getUser(username);
     }
 
-    // @GetMapping(path = "/echo", produces = "application/x-protobuf")
-    // @RequestMapping("/echo")
-    @GetMapping("/echo")
-    public CompletableFuture<EchoRequest> echo() {
-        return userService.echoCompleteFuture();
+    @PostMapping
+    public Mono<OuterlyyUser> post(@RequestBody OuterlyyUser outerlyyUser) {
+        return userService.createUser(outerlyyUser);
     }
     
 }

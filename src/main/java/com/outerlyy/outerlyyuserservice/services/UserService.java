@@ -3,9 +3,14 @@ package com.outerlyy.outerlyyuserservice.services;
 import java.util.concurrent.CompletableFuture;
 
 import com.outerlyy.outerlyyuserservice.dao.UserDao;
-import com.outerlyy.outerlyyuserservice.models.generated.EchoRequest;
+import com.outerlyy.outerlyyuserservice.formatters.UserFormatter;
+import com.outerlyy.outerlyyuserservice.models.generated.OuterlyyUser;
 
 import org.springframework.stereotype.Service;
+
+import reactor.core.publisher.Mono;
+import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
+import software.amazon.awssdk.services.dynamodb.model.PutItemResponse;
 
 
 @Service
@@ -20,8 +25,16 @@ public class UserService {
     public CompletableFuture<String> get(String username) {
         return userDao.echoCompleteFuture(username);
     }
+    
+    public Mono<OuterlyyUser>  createUser(OuterlyyUser user) {
+        return Mono.fromCompletionStage(userDao.createUser(user))
+                .map(PutItemResponse::attributes)
+                .map(attributeValueMap -> user);
+    }
 
-    public CompletableFuture<EchoRequest> echoCompleteFuture() {
-        return CompletableFuture.supplyAsync(() -> EchoRequest.newBuilder().setName("Echo ...").build());
+    public Mono<OuterlyyUser> getUser(String outerlyyUserId) {
+        return Mono.fromCompletionStage(userDao.getUser(outerlyyUserId))
+                .map(GetItemResponse::item)
+                .map(UserFormatter::fromMap);
     }
 }
