@@ -1,7 +1,5 @@
 package com.outerlyy.outerlyyuserservice.services;
 
-import java.util.concurrent.CompletableFuture;
-
 import com.outerlyy.outerlyyuserservice.dao.UserDao;
 import com.outerlyy.outerlyyuserservice.formatters.UserFormatter;
 import com.outerlyy.outerlyyuserservice.models.generated.OuterlyyUser;
@@ -22,19 +20,15 @@ public class UserService {
         this.userDao = userDao;
     }
 
-    public CompletableFuture<String> get(String username) {
-        return userDao.echoCompleteFuture(username);
-    }
-    
-    public Mono<OuterlyyUser>  createUser(OuterlyyUser user) {
-        return Mono.fromCompletionStage(userDao.createUser(user))
-                .map(PutItemResponse::attributes)
-                .map(attributeValueMap -> user);
-    }
-
     public Mono<OuterlyyUser> getUser(String outerlyyUserId) {
         return Mono.fromCompletionStage(userDao.getUser(outerlyyUserId))
                 .map(GetItemResponse::item)
                 .map(UserFormatter::fromMap);
+    }
+
+    public Mono<OuterlyyUser> createUser(OuterlyyUser user) {
+        return Mono.fromCompletionStage(userDao.createUser(user))
+                .map(PutItemResponse::attributes)
+                .map(attributeValueMap -> user);
     }
 }

@@ -112,7 +112,4 @@ public class UserDao {
         return dynamoDbAsyncClient.createTable(request);
 
     }
-
-    
-    
 }

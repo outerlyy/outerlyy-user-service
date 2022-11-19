@@ -41,7 +41,13 @@ protobuf {
   protoc {
 	      // Download from repositories
         // artifact = 'com.google.protobuf:protoc:3.10.1'
-        artifact = 'com.google.protobuf:protoc:3.0.0'
+        artifact = 'com.google.protobuf:protoc:3.6.1'
+    }
+
+    plugins {
+        grpc {
+            artifact = "io.grpc:protoc-gen-grpc-java:1.19.0"
+        }
     }
 
     // generateProtoTasks.generatedFilesBaseDir = 'src/main/java/com/outerlyy/outerlyyuserservice/generated'
@@ -50,8 +56,8 @@ protobuf {
 
     generateProtoTasks {
         // all() returns the collection of all protoc tasks
-        all().each { task ->
-            // Here you can configure the task
+        all()*.plugins {
+             // Here you can configure the task
         }
 
         // In addition to all(), you may get the task collection by various
@@ -63,20 +69,22 @@ protobuf {
     }   
 }
 
+// make ./gradlew bootJar also cleans the generated protobuf files
+clean {
+    delete 'src/main/java/com/outerlyy/outerlyyuserservice/models/generated'
+}
+
 sourceSets {
     main {
         proto {
 
              // In addition to the default 'src/main/proto'
-            //  srcDir 'src/main/protobuf'
              srcDir 'src/main/java/com/outerlyy/outerlyyuserservice/models/protobuf'
-
         }
 
         java {
             // srcDirs 'build/generated/source/proto/main/java'
             srcDir 'generated'
-
         }
     }
 }
