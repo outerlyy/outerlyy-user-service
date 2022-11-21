@@ -49,3 +49,6 @@ docker push outerlyy/user-service:latest
 ```
 ./gradlew bootRun
 ```
+## How to Deploy
+
+### Using Github Actions
