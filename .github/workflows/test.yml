@@ -20,6 +20,6 @@ jobs:
         run: ./gradlew build
      
       - name: Docker build
-        run: docker build -t test  .
+        run: docker build -t test .
     
           
