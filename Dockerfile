@@ -20,7 +20,6 @@ RUN curl -OL https://github.com/grpc/grpc-web/releases/download/1.2.1/${GRPC_WEB
 RUN mv ${GRPC_WEB} ${GRPC_WEB_PATH}
 RUN chmod +x ${GRPC_WEB_PATH}
 # RUN gradle build --no-daemon
-# RUN gradle clean build -i --stacktrace
 
 RUN gradle build -i --stacktrace
 

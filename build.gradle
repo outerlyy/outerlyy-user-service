@@ -31,9 +31,9 @@ dependencyManagement {
     }
 }
 
-test {
-	useJUnitPlatform()
-}
+// test {
+// 	useJUnitPlatform()
+// }
 
 protobuf {
   // Configure the protoc executable
