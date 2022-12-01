@@ -18,5 +18,8 @@ jobs:
     
       - name: Execute Gradle build
         run: ./gradlew build
+     
+      - name: Docker build
+        run: docker build -t test  .
     
           
