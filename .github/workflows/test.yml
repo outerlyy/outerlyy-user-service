@@ -1,5 +1,4 @@
-
-name: CICD
+name: CI-CD
 on:
   #  push:
    workflow_dispatch:
@@ -119,11 +118,3 @@ jobs:
      
       - name: Kubectl
         run: kubectl apply -f deployment.yaml
-
-      
-
-      
-
-  
-    
-          
