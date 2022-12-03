@@ -33,6 +33,7 @@ jobs:
           BRANCH=${GITHUB_REF##*/}
           echo "BRANCH=$BRANCH" >> $GITHUB_ENV
           echo "IMAGE_TAG=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_ENV
+          sed -i 's/docker-image-version/${{ env.IMAGE_TAG }}/' deployment.yaml
           
       - name: Set up JDK 8
         if: github.event.inputs.skip-ecr != 'true'
@@ -62,7 +63,7 @@ jobs:
 
       - name: Build Image
         id: build-image
-        if: && github.event.inputs.skip-ecr != 'true'
+        if: github.event.inputs.skip-ecr != 'true'
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run:  docker build -t $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG .
@@ -89,6 +90,10 @@ jobs:
     steps: 
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Update Image tag
+        if: github.event.inputs.skip-ecr == 'true'
+        run: sed -i 's/docker-image-version/latest/' deployment.yaml
         
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
