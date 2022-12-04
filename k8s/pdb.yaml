@@ -1,0 +1,10 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: outerlyy-user
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      run: outerlyy-user

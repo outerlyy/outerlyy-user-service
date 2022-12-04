@@ -1,0 +1,28 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: outerlyy-user
+spec:
+  selector:
+    matchLabels:
+      run: outerlyy-user
+  # remove replica if using gitops
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: outerlyy-user
+    spec:
+      containers:
+      - name: outerlyy-user
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 200m
+            memory: 256Mi
+          requests:
+            cpu: 200m
+            memory: 256Mi
