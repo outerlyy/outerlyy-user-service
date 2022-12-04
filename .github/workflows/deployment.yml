@@ -79,6 +79,7 @@ jobs:
       
   eks:
     name: Kubectl Apply
+    needs: ecr
     runs-on: ubuntu-latest
     steps: 
       - name: Checkout
