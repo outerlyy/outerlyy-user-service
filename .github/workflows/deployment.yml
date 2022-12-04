@@ -10,7 +10,7 @@ on:
         required: false
 
 env:
-  AWS_REGION: "ap-south-1"
+  AWS_REGION: "us-east-1"
   ECR_REPOSITORY: "outerlyy-infra"
 
 
@@ -40,81 +40,79 @@ jobs:
         if: github.event.inputs.skip-ecr != 'true'
         run: |
           ./gradlew build
-          ls 
-          docker build -t test .
       
-  #     - name: Configure AWS credentials
-  #       if: github.event.inputs.skip-ecr != 'true'
-  #       uses: aws-actions/configure-aws-credentials@v1
-  #       with:
-  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  #         aws-region: ${{ env.AWS_REGION }}
+      - name: Configure AWS credentials
+        if: github.event.inputs.skip-ecr != 'true'
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-  #     - name: Login to Amazon ECR
-  #       id: login-ecr
-  #       if: github.event.inputs.skip-ecr != 'true'
-  #       uses: aws-actions/amazon-ecr-login@v1
+      - name: Login to Amazon ECR
+        id: login-ecr
+        if: github.event.inputs.skip-ecr != 'true'
+        uses: aws-actions/amazon-ecr-login@v1
 
-  #     - name: Build Image
-  #       id: build-image
-  #       if: github.event.inputs.skip-ecr != 'true'
-  #       env:
-  #         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-  #       run:  docker build -t $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG .
+      - name: Build Image
+        id: build-image
+        if: github.event.inputs.skip-ecr != 'true'
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run:  docker build -t $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG .
 
-  #     - name: Tag Image
-  #       id: tag-image
-  #       if: github.event.inputs.skip-ecr != 'true'
-  #       env:
-  #         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-  #       run: docker tag $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:latest
+      - name: Tag Image
+        id: tag-image
+        if: github.event.inputs.skip-ecr != 'true'
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: docker tag $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:latest
       
-  #     - name: Push Image
-  #       id: push-image
-  #       if: github.event.inputs.skip-ecr != 'true'
-  #       env:
-  #         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-  #       run: |
-  #         docker push $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG
-  #         docker push $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:latest
+      - name: Push Image
+        id: push-image
+        if: github.event.inputs.skip-ecr != 'true'
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:latest
       
-  # eks:
-  #   name: Kubectl Apply
-  #   runs-on: ubuntu-latest
-  #   steps: 
-  #     - name: Checkout
-  #       uses: actions/checkout@v3
+  eks:
+    name: Kubectl Apply
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Checkout
+        uses: actions/checkout@v3
 
-  #     - name: Update Image tag
-  #       if: github.event.inputs.skip-ecr == 'true'
-  #       run: sed -i 's/docker-image-version/latest/' deployment.yaml
+      - name: Update Image tag
+        if: github.event.inputs.skip-ecr == 'true'
+        run: sed -i 's/docker-image-version/latest/' deployment.yaml
         
-  #     - name: Configure AWS credentials
-  #       uses: aws-actions/configure-aws-credentials@v1
-  #       with:
-  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  #         aws-region: ${{ env.AWS_REGION }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-  #     - name: Get Config File
-  #       run: |
-  #         curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-  #         unzip awscliv2.zip
-  #         sudo ./aws/install --update 
-  #         aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER }} --region  ${{ env.AWS_REGION }}
-  #         aws sts get-caller-identity
-  #         aws eks get-token --region ${{ env.AWS_REGION }} --cluster-name ${{ env.EKS_CLUSTER }}
+      - name: Get Config File
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install --update 
+          aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER }} --region  ${{ env.AWS_REGION }}
+          aws sts get-caller-identity
+          aws eks get-token --region ${{ env.AWS_REGION }} --cluster-name ${{ env.EKS_CLUSTER }}
 
-  #     - name: Install and configure kubectl
-  #       run: |
-  #         VERSION=$(curl --silent https://storage.googleapis.com/kubernetes-release/release/stable.txt)
-  #         curl https://storage.googleapis.com/kubernetes-release/release/$VERSION/bin/linux/amd64/kubectl \
-  #             --progress-bar \
-  #             --location \
-  #             --remote-name
-  #         chmod +x kubectl
-  #         sudo mv kubectl /usr/local/bin/
+      - name: Install and configure kubectl
+        run: |
+          VERSION=$(curl --silent https://storage.googleapis.com/kubernetes-release/release/stable.txt)
+          curl https://storage.googleapis.com/kubernetes-release/release/$VERSION/bin/linux/amd64/kubectl \
+              --progress-bar \
+              --location \
+              --remote-name
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
      
-  #     - name: Kubectl
-  #       run: kubectl apply -f k8s/
+      - name: Kubectl
+        run: kubectl apply -f k8s/
