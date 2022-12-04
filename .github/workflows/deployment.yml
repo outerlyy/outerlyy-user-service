@@ -26,14 +26,6 @@ jobs:
       - name: Checkout
         if: github.event.inputs.skip-ecr != 'true'
         uses: actions/checkout@v3
-
-      - name: Get Branch Name
-        if: github.event.inputs.skip-ecr != 'true'
-        run: |
-          BRANCH=${GITHUB_REF##*/}
-          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
-          echo "IMAGE_TAG=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_ENV
-          sed -i 's/docker-image-version/${{ env.IMAGE_TAG }}/' deployment.yaml
           
       - name: Set up JDK 8
         if: github.event.inputs.skip-ecr != 'true'
