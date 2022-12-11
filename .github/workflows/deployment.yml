@@ -1,6 +1,6 @@
 name: CI-CD
 on:
-   push:
+  # push:
    workflow_dispatch:
     inputs:
       skip-ecr:
@@ -44,7 +44,7 @@ jobs:
 
           elif [ $BRANCH = master ]; then
             echo "Production Configuration"
-            sed -i 's/dev/prod/' 0-provider.tf
+            sed -i 's/-Dspring.profiles.active=dev/-Dspring.profiles.active=prod/' Dockerfile
 
           else
             echo "Wrong Branch"
@@ -71,106 +71,101 @@ jobs:
         run: |
           ./gradlew test
 
-      - name: Build
-        run: docker build -t test .
+      - name: Configure AWS credentials
+        if: github.event.inputs.skip-ecr != 'true'
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        if: github.event.inputs.skip-ecr != 'true'
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build Image
+        id: build-image
+        if: github.event.inputs.skip-ecr != 'true'
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run:  docker build -t $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG .
+
+      - name: Tag Image
+        id: tag-image
+        if: github.event.inputs.skip-ecr != 'true'
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: docker tag $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:latest
       
-      - name: Docker run
-        run: docker run -d -p 80:8080 test 
-      # - name: Configure AWS credentials
-      #   if: github.event.inputs.skip-ecr != 'true'
-      #   uses: aws-actions/configure-aws-credentials@v1
-      #   with:
-      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     aws-region: ${{ env.AWS_REGION }}
-
-      # - name: Login to Amazon ECR
-      #   id: login-ecr
-      #   if: github.event.inputs.skip-ecr != 'true'
-      #   uses: aws-actions/amazon-ecr-login@v1
-
-      # - name: Build Image
-      #   id: build-image
-      #   if: github.event.inputs.skip-ecr != 'true'
-      #   env:
-      #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-      #   run:  docker build -t $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG .
-
-      # - name: Tag Image
-      #   id: tag-image
-      #   if: github.event.inputs.skip-ecr != 'true'
-      #   env:
-      #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-      #   run: docker tag $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:latest
+      - name: Push Image
+        id: push-image
+        if: github.event.inputs.skip-ecr != 'true'
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:latest
       
-      # - name: Push Image
-      #   id: push-image
-      #   if: github.event.inputs.skip-ecr != 'true'
-      #   env:
-      #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-      #   run: |
-      #     docker push $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG
-      #     docker push $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:latest
-      
-  # eks:
-  #   name: Kubectl Apply
-  #   needs: ecr
-  #   runs-on: ubuntu-latest
-  #   steps: 
-  #     - name: Checkout
-  #       uses: actions/checkout@v3
+  eks:
+    name: Kubectl Apply
+    needs: ecr
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Checkout
+        uses: actions/checkout@v3
 
-  #     - name: Update Image tag
-  #       if: github.event.inputs.skip-ecr == 'true'
-  #       run: sed -i 's/docker-image-version/latest/' deployment.yaml
+      - name: Update Image tag
+        if: github.event.inputs.skip-ecr == 'true'
+        run: sed -i 's/docker-image-version/latest/' deployment.yaml
 
 
-  #     - name: Get Branch Name
-  #       if: github.event.inputs.skip-ecr != 'true'
-  #       run: |
-  #         BRANCH=${GITHUB_REF##*/}
-  #         echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+      - name: Get Branch Name
+        if: github.event.inputs.skip-ecr != 'true'
+        run: |
+          BRANCH=${GITHUB_REF##*/}
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
         
-  #     - name: Configure AWS credentials
-  #       uses: aws-actions/configure-aws-credentials@v1
-  #       with:
-  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  #         aws-region: ${{ env.AWS_REGION }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-  #     - name: Get Config File
-  #       run: |
-  #         curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-  #         unzip awscliv2.zip
-  #         sudo ./aws/install --update 
+      - name: Get Config File
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install --update 
 
-  #         if [ $BRANCH = dev ]; then
-  #           echo "Development Configuration"
-  #           aws eks update-kubeconfig --name outerlyy-dev --region  ${{ env.AWS_REGION }}
-  #           aws sts get-caller-identity
-  #           aws eks get-token --region ${{ env.AWS_REGION }} --cluster-name outerlyy-dev
+          if [ $BRANCH = dev ]; then
+            echo "Development Configuration"
+            aws eks update-kubeconfig --name outerlyy-dev --region  ${{ env.AWS_REGION }}
+            aws sts get-caller-identity
+            aws eks get-token --region ${{ env.AWS_REGION }} --cluster-name outerlyy-dev
             
-  #         elif [ $BRANCH = master ]; then
-  #           echo "Production Configuration"
-  #           aws eks update-kubeconfig --name outerlyy-prod --region  ${{ env.AWS_REGION }}
-  #           aws sts get-caller-identity
-  #           aws eks get-token --region ${{ env.AWS_REGION }} --cluster-name outerlyy-prod
+          elif [ $BRANCH = master ]; then
+            echo "Production Configuration"
+            aws eks update-kubeconfig --name outerlyy-prod --region  ${{ env.AWS_REGION }}
+            aws sts get-caller-identity
+            aws eks get-token --region ${{ env.AWS_REGION }} --cluster-name outerlyy-prod
 
-  #         else
-  #           echo "Wrong Branch"
-  #           exit 0
-  #         fi
+          else
+            echo "Wrong Branch"
+            exit 0
+          fi
          
 
-  #     - name: Install and configure kubectl
-  #       run: |
-  #         VERSION=$(curl --silent https://storage.googleapis.com/kubernetes-release/release/stable.txt)
-  #         curl https://storage.googleapis.com/kubernetes-release/release/$VERSION/bin/linux/amd64/kubectl \
-  #             --progress-bar \
-  #             --location \
-  #             --remote-name
-  #         chmod +x kubectl
-  #         sudo mv kubectl /usr/local/bin/
+      - name: Install and configure kubectl
+        run: |
+          VERSION=$(curl --silent https://storage.googleapis.com/kubernetes-release/release/stable.txt)
+          curl https://storage.googleapis.com/kubernetes-release/release/$VERSION/bin/linux/amd64/kubectl \
+              --progress-bar \
+              --location \
+              --remote-name
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
      
-  #     - name: Kubectl
-  #       run: kubectl apply -f k8s/
+      - name: Kubectl
+        run: kubectl apply -f k8s/
