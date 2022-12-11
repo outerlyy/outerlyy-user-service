@@ -26,12 +26,37 @@ jobs:
       - name: Checkout
         if: github.event.inputs.skip-ecr != 'true'
         uses: actions/checkout@v3
+
+      
+      - name: Get Branch Name
+        if: github.event.inputs.skip-ecr != 'true'
+        run: |
+          BRANCH=${GITHUB_REF##*/}
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+
+      - name: Change Environment
+        if: github.event.inputs.skip-ecr != 'true'
+        run: |
+          set -e
+
+          if [ $BRANCH = dev ]; then
+            echo "Development Configuration"
+
+          elif [ $BRANCH = master ]; then
+            echo "Production Configuration"
+            sed -i 's/dev/prod/' 0-provider.tf
+
+          else
+            echo "Wrong Branch"
+            exit 0
+          fi
           
       - name: Set up JDK 8
         if: github.event.inputs.skip-ecr != 'true'
         uses: actions/setup-java@v1
         with:
             java-version: '8'
+
       - name: Setup Gradle
         if: github.event.inputs.skip-ecr != 'true'
         uses: gradle/gradle-build-action@v2
@@ -40,6 +65,11 @@ jobs:
         if: github.event.inputs.skip-ecr != 'true'
         run: |
           ./gradlew build
+      
+      - name: Execute Gradle Test
+        if: github.event.inputs.skip-ecr != 'true'
+        run: |
+          ./gradlew Test
       
       - name: Configure AWS credentials
         if: github.event.inputs.skip-ecr != 'true'
@@ -88,6 +118,13 @@ jobs:
       - name: Update Image tag
         if: github.event.inputs.skip-ecr == 'true'
         run: sed -i 's/docker-image-version/latest/' deployment.yaml
+
+
+      - name: Get Branch Name
+        if: github.event.inputs.skip-ecr != 'true'
+        run: |
+          BRANCH=${GITHUB_REF##*/}
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
         
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -101,9 +138,24 @@ jobs:
           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
           unzip awscliv2.zip
           sudo ./aws/install --update 
-          aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER }} --region  ${{ env.AWS_REGION }}
-          aws sts get-caller-identity
-          aws eks get-token --region ${{ env.AWS_REGION }} --cluster-name ${{ env.EKS_CLUSTER }}
+
+          if [ $BRANCH = dev ]; then
+            echo "Development Configuration"
+            aws eks update-kubeconfig --name outerlyy-dev --region  ${{ env.AWS_REGION }}
+            aws sts get-caller-identity
+            aws eks get-token --region ${{ env.AWS_REGION }} --cluster-name outerlyy-dev
+            
+          elif [ $BRANCH = master ]; then
+            echo "Production Configuration"
+            aws eks update-kubeconfig --name outerlyy-prod --region  ${{ env.AWS_REGION }}
+            aws sts get-caller-identity
+            aws eks get-token --region ${{ env.AWS_REGION }} --cluster-name outerlyy-prod
+
+          else
+            echo "Wrong Branch"
+            exit 0
+          fi
+         
 
       - name: Install and configure kubectl
         run: |
