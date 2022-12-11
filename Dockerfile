@@ -12,5 +12,4 @@ RUN mkdir /app
 
 COPY --from=build /home/gradle/src/build/libs/*.jar /app/
 
-
-ENTRYPOINT ["java", "-XX:+UnlockExperimentalVMOptions", "-XX:+UseCGroupMemoryLimitForHeap", "-Djava.security.egd=file:/dev/./urandom","-jar","/app/outerlyy-user-service-0.0.1-SNAPSHOT.jar"]
+ENTRYPOINT ["java", "-XX:+UnlockExperimentalVMOptions", "-XX:+UseCGroupMemoryLimitForHeap", "-Djava.security.egd=file:/dev/./urandom","-Dspring.profiles.active=dev","-jar","/app/outerlyy-user-service-0.0.1-SNAPSHOT.jar"]
