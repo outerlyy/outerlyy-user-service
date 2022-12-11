@@ -69,43 +69,44 @@ jobs:
       - name: Execute Gradle Test
         if: github.event.inputs.skip-ecr != 'true'
         run: |
-          ./gradlew Test
+          ./gradlew test
+      - name: Build
+        run: docker build -t test .
+      # - name: Configure AWS credentials
+      #   if: github.event.inputs.skip-ecr != 'true'
+      #   uses: aws-actions/configure-aws-credentials@v1
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: ${{ env.AWS_REGION }}
+
+      # - name: Login to Amazon ECR
+      #   id: login-ecr
+      #   if: github.event.inputs.skip-ecr != 'true'
+      #   uses: aws-actions/amazon-ecr-login@v1
+
+      # - name: Build Image
+      #   id: build-image
+      #   if: github.event.inputs.skip-ecr != 'true'
+      #   env:
+      #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      #   run:  docker build -t $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG .
+
+      # - name: Tag Image
+      #   id: tag-image
+      #   if: github.event.inputs.skip-ecr != 'true'
+      #   env:
+      #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      #   run: docker tag $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:latest
       
-      - name: Configure AWS credentials
-        if: github.event.inputs.skip-ecr != 'true'
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        if: github.event.inputs.skip-ecr != 'true'
-        uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Build Image
-        id: build-image
-        if: github.event.inputs.skip-ecr != 'true'
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        run:  docker build -t $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG .
-
-      - name: Tag Image
-        id: tag-image
-        if: github.event.inputs.skip-ecr != 'true'
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        run: docker tag $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:latest
-      
-      - name: Push Image
-        id: push-image
-        if: github.event.inputs.skip-ecr != 'true'
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        run: |
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:latest
+      # - name: Push Image
+      #   id: push-image
+      #   if: github.event.inputs.skip-ecr != 'true'
+      #   env:
+      #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      #   run: |
+      #     docker push $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG
+      #     docker push $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:latest
       
   eks:
     name: Kubectl Apply
