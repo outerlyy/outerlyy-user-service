@@ -174,11 +174,11 @@ jobs:
 
       - name: Kubectl
         run: |
-          kubectl apply -f k8s/
+          # kubectl apply -f k8s/
           kubectl get all 
       
       - name: Delete Kubectl
-        if: github.event.inputs.destroy == 'true'
+        # if: github.event.inputs.destroy == 'true'
         id: destroy
         run: |
           kubectl delete -f k8s/
