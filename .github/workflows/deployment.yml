@@ -9,6 +9,12 @@ on:
         description: "Skip Image Build and Push"
         default: false
         required: false
+      destroy:
+        type: boolean
+        description: "delete lb"
+        default: false
+        required: false
+
 
 env:
   AWS_REGION: "us-east-1"
@@ -165,8 +171,15 @@ jobs:
               --remote-name
           chmod +x kubectl
           sudo mv kubectl /usr/local/bin/
-     
+
       - name: Kubectl
         run: |
           kubectl apply -f k8s/
+          kubectl get all 
+      
+      - name: Delete Kubectl
+        if: github.event.inputs.destroy == 'true'
+        id: destroy
+        run: |
+          kubectl delete -f k8s/
           kubectl get all 
