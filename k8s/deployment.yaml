@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: outerlyy-user
-        image: nginx:latest
+        image: 587487921095.dkr.ecr.us-east-1.amazonaws.com/outerlyy-dev:latest
         ports:
         - containerPort: 80
         resources:

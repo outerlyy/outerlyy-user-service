@@ -117,11 +117,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Update Image tag
-        if: github.event.inputs.skip-ecr == 'true'
-        run: sed -i 's/docker-image-version/latest/' deployment.yaml
-
-
       - name: Get Branch Name
         if: github.event.inputs.skip-ecr != 'true'
         run: |
@@ -147,11 +142,13 @@ jobs:
             aws sts get-caller-identity
             aws eks get-token --region ${{ env.AWS_REGION }} --cluster-name outerlyy-dev
             
+            
           elif [ $BRANCH = master ]; then
             echo "Production Configuration"
             aws eks update-kubeconfig --name outerlyy-prod --region  ${{ env.AWS_REGION }}
             aws sts get-caller-identity
             aws eks get-token --region ${{ env.AWS_REGION }} --cluster-name outerlyy-prod
+            sed -i 's/outerlyy-dev/outerlyy-prod/' k8s/deployment.yaml
 
           else
             echo "Wrong Branch"
