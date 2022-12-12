@@ -169,4 +169,6 @@ jobs:
           sudo mv kubectl /usr/local/bin/
      
       - name: Kubectl
-        run: kubectl apply -f k8s/
+        run: |
+          kubectl apply -f k8s/
+          kubectl get all 
