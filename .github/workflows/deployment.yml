@@ -33,6 +33,7 @@ jobs:
         run: |
           BRANCH=${GITHUB_REF##*/}
           echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+          echo "IMAGE_TAG=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_ENV
 
       - name: Change Environment
         if: github.event.inputs.skip-ecr != 'true'
