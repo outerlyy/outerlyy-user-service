@@ -176,8 +176,8 @@ jobs:
         run: |
           with open(r'k8s/deployment.yaml', 'r') as file:
               data = file.read()
-              data = data.replace("AWS_ACCESS_KEY_ID_VALUE",${{ secrets.AWS_ACCESS_KEY_ID }})
-              data = data.replace("AWS_SECRET_ACCESS_KEY_VALUE",${{ secrets.AWS_SECRET_ACCESS_KEY }})
+              data = data.replace("AWS_ACCESS_KEY_ID_VALUE","${{ secrets.AWS_ACCESS_KEY_ID }}")
+              data = data.replace("AWS_SECRET_ACCESS_KEY_VALUE","${{ secrets.AWS_SECRET_ACCESS_KEY }}")
           with open(r'k8s/deployment.yaml', 'w') as file:
               file.write(data)
       
