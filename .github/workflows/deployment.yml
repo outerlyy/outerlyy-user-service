@@ -174,15 +174,14 @@ jobs:
 
       # - name: Kubectl
       #   run: |
-      #     kubectl logs pod/outerlyy-user-69bd5fd889-f5lpd
       #     kubectl apply -f k8s/
       #     kubectl get all
          
 
       
-      - name: Delete Kubectl
-       # if: github.event.inputs.destroy == 'true'
-        id: destroy
-        run: |
-          kubectl delete -f k8s/
-          kubectl get all 
+      # - name: Delete Kubectl
+      #  # if: github.event.inputs.destroy == 'true'
+      #   id: destroy
+      #   run: |
+      #     kubectl delete -f k8s/
+      #     kubectl get all 
