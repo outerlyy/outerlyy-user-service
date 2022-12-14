@@ -180,16 +180,7 @@ jobs:
               data = data.replace("AWS_SECRET_ACCESS_KEY_VALUE","${{ secrets.AWS_SECRET_ACCESS_KEY }}")
           with open(r'k8s/deployment.yaml', 'w') as file:
               file.write(data)
-      
-          # sed 's/AWS_ACCESS_KEY_ID_VALUE/"${{ secrets.AWS_ACCESS_KEY_ID }}"/g' k8s/deployment.yaml
-          # sed 's/AWS_SECRET_ACCESS_KEY_VALUE/"${{ secrets.AWS_SECRET_ACCESS_KEY }}"/g' k8s/deployment.yaml
-          
-          #cat k8s/deployment.yaml
         shell: python
-      - uses: actions/upload-artifact@v3
-        with:
-          name: test
-          path: k8s/deployment.yaml
 
       - name: Kubectl
         run: |
