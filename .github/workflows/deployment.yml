@@ -22,98 +22,98 @@ env:
 
 
 jobs:
-  # ecr:
-  #   name: Build and Push
-  #   runs-on: ubuntu-latest
-  #   steps: 
-  #     - name: Skipped Image build and push
-  #       if: github.event.inputs.skip-ecr == 'true'
-  #       run: echo " Skipped image build and push"
+  ecr:
+    name: Build and Push
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Skipped Image build and push
+        if: github.event.inputs.skip-ecr == 'true'
+        run: echo " Skipped image build and push"
         
-  #     - name: Checkout
-  #       if: github.event.inputs.skip-ecr != 'true'
-  #       uses: actions/checkout@v3
+      - name: Checkout
+        if: github.event.inputs.skip-ecr != 'true'
+        uses: actions/checkout@v3
 
       
-  #     - name: Get Branch Name
-  #       if: github.event.inputs.skip-ecr != 'true'
-  #       run: |
-  #         BRANCH=${GITHUB_REF##*/}
-  #         echo "BRANCH=$BRANCH" >> $GITHUB_ENV
-  #         echo "IMAGE_TAG=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_ENV
+      - name: Get Branch Name
+        if: github.event.inputs.skip-ecr != 'true'
+        run: |
+          BRANCH=${GITHUB_REF##*/}
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+          echo "IMAGE_TAG=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_ENV
 
-  #     - name: Change Environment
-  #       if: github.event.inputs.skip-ecr != 'true'
-  #       run: |
-  #         set -e
+      - name: Change Environment
+        if: github.event.inputs.skip-ecr != 'true'
+        run: |
+          set -e
 
-  #         if [ $BRANCH = dev ]; then
-  #           echo "Development Configuration"
+          if [ $BRANCH = dev ]; then
+            echo "Development Configuration"
 
-  #         elif [ $BRANCH = master ]; then
-  #           echo "Production Configuration"
-  #           sed -i 's/-Dspring.profiles.active=dev/-Dspring.profiles.active=prod/' Dockerfile
+          elif [ $BRANCH = master ]; then
+            echo "Production Configuration"
+            sed -i 's/-Dspring.profiles.active=dev/-Dspring.profiles.active=prod/' Dockerfile
 
-  #         else
-  #           echo "Wrong Branch"
-  #           exit 0
-  #         fi
+          else
+            echo "Wrong Branch"
+            exit 0
+          fi
           
-  #     - name: Set up JDK 8
-  #       if: github.event.inputs.skip-ecr != 'true'
-  #       uses: actions/setup-java@v1
-  #       with:
-  #           java-version: '8'
+      - name: Set up JDK 8
+        if: github.event.inputs.skip-ecr != 'true'
+        uses: actions/setup-java@v1
+        with:
+            java-version: '8'
 
-  #     - name: Setup Gradle
-  #       if: github.event.inputs.skip-ecr != 'true'
-  #       uses: gradle/gradle-build-action@v2
+      - name: Setup Gradle
+        if: github.event.inputs.skip-ecr != 'true'
+        uses: gradle/gradle-build-action@v2
     
-  #     - name: Execute Gradle Build
-  #       if: github.event.inputs.skip-ecr != 'true'
-  #       run: |
-  #         ./gradlew build
+      - name: Execute Gradle Build
+        if: github.event.inputs.skip-ecr != 'true'
+        run: |
+          ./gradlew build
       
-  #     - name: Execute Gradle Test
-  #       if: github.event.inputs.skip-ecr != 'true'
-  #       run: |
-  #         ./gradlew test
+      - name: Execute Gradle Test
+        if: github.event.inputs.skip-ecr != 'true'
+        run: |
+          ./gradlew test
 
-  #     - name: Configure AWS credentials
-  #       if: github.event.inputs.skip-ecr != 'true'
-  #       uses: aws-actions/configure-aws-credentials@v1
-  #       with:
-  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  #         aws-region: ${{ env.AWS_REGION }}
+      - name: Configure AWS credentials
+        if: github.event.inputs.skip-ecr != 'true'
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-  #     - name: Login to Amazon ECR
-  #       id: login-ecr
-  #       if: github.event.inputs.skip-ecr != 'true'
-  #       uses: aws-actions/amazon-ecr-login@v1
+      - name: Login to Amazon ECR
+        id: login-ecr
+        if: github.event.inputs.skip-ecr != 'true'
+        uses: aws-actions/amazon-ecr-login@v1
 
-  #     - name: Build Image
-  #       id: build-image
-  #       if: github.event.inputs.skip-ecr != 'true'
-  #       env:
-  #         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-  #       run:  docker build -t $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG .
+      - name: Build Image
+        id: build-image
+        if: github.event.inputs.skip-ecr != 'true'
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run:  docker build -t $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG .
 
-  #     - name: Tag Image
-  #       id: tag-image
-  #       if: github.event.inputs.skip-ecr != 'true'
-  #       env:
-  #         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-  #       run: docker tag $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:latest
+      - name: Tag Image
+        id: tag-image
+        if: github.event.inputs.skip-ecr != 'true'
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: docker tag $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:latest
       
-  #     - name: Push Image
-  #       id: push-image
-  #       if: github.event.inputs.skip-ecr != 'true'
-  #       env:
-  #         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-  #       run: |
-  #         docker push $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG
-  #         docker push $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:latest
+      - name: Push Image
+        id: push-image
+        if: github.event.inputs.skip-ecr != 'true'
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:latest
       
   eks:
     name: Kubectl Apply
