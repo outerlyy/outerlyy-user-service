@@ -181,7 +181,8 @@ jobs:
 
       - name: Kubectl
         run: |
-          pod/outerlyy-user-6b9778b57d-2lchj
+          kubectl describe pod/outerlyy-user-6b9778b57d-2lchj
+          kubectl logs pod/outerlyy-user-6b9778b57d-2lchj
           kubectl apply -f k8s/
           kubectl get all
          
