@@ -1,0 +1,195 @@
+name: CI-CD
+
+on:
+  push:
+  workflow_dispatch:
+    inputs:
+      skip-ecr:
+        type: boolean
+        description: "Skip Image Build and Push"
+        default: false
+        required: false
+      destroy:
+        type: boolean
+        description: "delete lb"
+        default: false
+        required: false
+
+
+env:
+  AWS_REGION: "us-east-1"
+  ECR_REPOSITORY: "outerlyy"
+
+
+jobs:
+  ecr:
+    name: Build and Push
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Skipped Image build and push
+        if: github.event.inputs.skip-ecr == 'true'
+        run: echo " Skipped image build and push"
+        
+      - name: Checkout
+        if: github.event.inputs.skip-ecr != 'true'
+        uses: actions/checkout@v3
+
+      
+      - name: Get Branch Name
+        if: github.event.inputs.skip-ecr != 'true'
+        run: |
+          BRANCH=${GITHUB_REF##*/}
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+          echo "IMAGE_TAG=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_ENV
+
+      - name: Change Environment
+        if: github.event.inputs.skip-ecr != 'true'
+        run: |
+          set -e
+
+          if [ $BRANCH = dev ]; then
+            echo "Development Configuration"
+
+          elif [ $BRANCH = master ]; then
+            echo "Production Configuration"
+            sed -i 's/-Dspring.profiles.active=dev/-Dspring.profiles.active=prod/' Dockerfile
+
+          else
+            echo "Wrong Branch"
+            exit 0
+          fi
+          
+      - name: Set up JDK 8
+        if: github.event.inputs.skip-ecr != 'true'
+        uses: actions/setup-java@v1
+        with:
+            java-version: '8'
+
+      - name: Setup Gradle
+        if: github.event.inputs.skip-ecr != 'true'
+        uses: gradle/gradle-build-action@v2
+    
+      - name: Execute Gradle Build
+        if: github.event.inputs.skip-ecr != 'true'
+        run: |
+          ./gradlew build
+      
+      - name: Execute Gradle Test
+        if: github.event.inputs.skip-ecr != 'true'
+        run: |
+          ./gradlew test
+
+      - name: Configure AWS credentials
+        if: github.event.inputs.skip-ecr != 'true'
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        if: github.event.inputs.skip-ecr != 'true'
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build Image
+        id: build-image
+        if: github.event.inputs.skip-ecr != 'true'
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run:  docker build -t $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG .
+
+      - name: Tag Image
+        id: tag-image
+        if: github.event.inputs.skip-ecr != 'true'
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: docker tag $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:latest
+      
+      - name: Push Image
+        id: push-image
+        if: github.event.inputs.skip-ecr != 'true'
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY-$BRANCH:latest
+      
+  eks:
+    name: Kubectl Apply
+    # needs: ecr
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Get Branch Name
+        if: github.event.inputs.skip-ecr != 'true'
+        run: |
+          BRANCH=${GITHUB_REF##*/}
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+        
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get Config File
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install --update 
+
+          if [ $BRANCH = dev ]; then
+            echo "Development Configuration"
+            aws eks update-kubeconfig --name outerlyy-dev --region  ${{ env.AWS_REGION }}
+            aws sts get-caller-identity
+            aws eks get-token --region ${{ env.AWS_REGION }} --cluster-name outerlyy-dev
+            
+            
+          elif [ $BRANCH = master ]; then
+            echo "Production Configuration"
+            aws eks update-kubeconfig --name outerlyy-prod --region  ${{ env.AWS_REGION }}
+            aws sts get-caller-identity
+            aws eks get-token --region ${{ env.AWS_REGION }} --cluster-name outerlyy-prod
+            sed -i 's/outerlyy-dev/outerlyy-prod/' k8s/deployment.yaml
+
+          else
+            echo "Wrong Branch"
+            exit 0
+          fi
+         
+
+      - name: Install and configure kubectl
+        run: |
+          VERSION=$(curl --silent https://storage.googleapis.com/kubernetes-release/release/stable.txt)
+          curl https://storage.googleapis.com/kubernetes-release/release/$VERSION/bin/linux/amd64/kubectl \
+              --progress-bar \
+              --location \
+              --remote-name
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
+      
+      - name: Update AWS creds in deployment
+        run: |
+          with open(r'k8s/deployment.yaml', 'r') as file:
+              data = file.read()
+              data = data.replace("AWS_ACCESS_KEY_ID_VALUE","${{ secrets.AWS_ACCESS_KEY_ID }}")
+              data = data.replace("AWS_SECRET_ACCESS_KEY_VALUE","${{ secrets.AWS_SECRET_ACCESS_KEY }}")
+          with open(r'k8s/deployment.yaml', 'w') as file:
+              file.write(data)
+        shell: python
+
+      - name: Kubectl
+        run: |
+          kubectl apply -f k8s/
+          kubectl get all
+         
+      - name: Delete Kubectl
+        if: github.event.inputs.destroy == 'true'
+        id: destroy
+        run: |
+          kubectl delete -f k8s/
+          kubectl get all 
