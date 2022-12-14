@@ -2,18 +2,18 @@ name: CI-CD
 
 on:
   push:
-  # workflow_dispatch:
-  #   inputs:
-  #     skip-ecr:
-  #       type: boolean
-  #       description: "Skip Image Build and Push"
-  #       default: false
-  #       required: false
-  #     destroy:
-  #       type: boolean
-  #       description: "delete lb"
-  #       default: false
-  #       required: false
+  workflow_dispatch:
+    inputs:
+      skip-ecr:
+        type: boolean
+        description: "Skip Image Build and Push"
+        default: false
+        required: false
+      destroy:
+        type: boolean
+        description: "delete lb"
+        default: false
+        required: false
 
 
 env:
@@ -143,8 +143,9 @@ jobs:
           sudo ./aws/install --update 
           AWS_ACCESS_KEY_ID_VALUE=${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY_VALUE=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          sed -i 's/AWS_ACCESS_KEY_ID_VALUE/$AWS_ACCESS_KEY_ID_VALUE/' k8s/deployment.yaml
-          sed -i 's/AWS_SECRET_ACCESS_KEY_VALUE/$AWS_SECRET_ACCESS_KEY_VALUE/' k8s/deployment.yaml
+
+          sed -i 's/AWS_ACCESS_KEY_ID_VALUE/{$AWS_ACCESS_KEY_ID_VALUE}/' k8s/deployment.yaml
+          sed -i 's/AWS_SECRET_ACCESS_KEY_VALUE/${AWS_SECRET_ACCESS_KEY_VALUE}/' k8s/deployment.yaml
 
           cat k8s/deployment.yaml
 
