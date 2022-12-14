@@ -146,6 +146,8 @@ jobs:
           sed -i 's/AWS_ACCESS_KEY_ID_VALUE/$AWS_ACCESS_KEY_ID_VALUE/' k8s/deployment.yaml
           sed -i 's/AWS_SECRET_ACCESS_KEY_VALUE/$AWS_SECRET_ACCESS_KEY_VALUE/' k8s/deployment.yaml
 
+          cat k8s/deployment.yaml
+
           if [ $BRANCH = dev ]; then
             echo "Development Configuration"
             aws eks update-kubeconfig --name outerlyy-dev --region  ${{ env.AWS_REGION }}
