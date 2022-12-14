@@ -174,8 +174,8 @@ jobs:
       
       - name: Update AWS creds in deployment
         run: |
-           sed -i 's/AWS_ACCESS_KEY_ID_VALUE/${{ secrets.AWS_ACCESS_KEY_ID }}/g' k8s/deployment.yaml
-           sed -i 's/AWS_SECRET_ACCESS_KEY_VALUE/${{ secrets.AWS_SECRET_ACCESS_KEY }}/g' k8s/deployment.yaml
+           sed 's/AWS_ACCESS_KEY_ID_VALUE/${{ secrets.AWS_ACCESS_KEY_ID }}/g' k8s/deployment.yaml
+           sed 's/AWS_SECRET_ACCESS_KEY_VALUE/${{ secrets.AWS_SECRET_ACCESS_KEY }}/g' k8s/deployment.yaml
           
            cat k8s/deployment.yaml
       # - uses: actions/upload-artifact@v3
