@@ -183,7 +183,7 @@ jobs:
 
          
       - name: Delete Kubectl
-       # if: github.event.inputs.destroy == 'true'
+        if: github.event.inputs.destroy == 'true'
         id: destroy
         run: |
           kubectl delete -f k8s/
