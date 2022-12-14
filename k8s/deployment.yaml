@@ -16,15 +16,11 @@ spec:
     spec:
       containers:
       - name: outerlyy-user
-        # image: 587487921095.dkr.ecr.us-east-1.amazonaws.com/outerlyy-dev:latest
-        image: nginx:latest
-        imagePullPolicy: Always
+        image: 587487921095.dkr.ecr.us-east-1.amazonaws.com/outerlyy-dev:latest
         ports:
-        - containerPort: 80
-        resources:
-          limits:
-            cpu: 512m
-            memory: 1024Mi
-          requests:
-            cpu: 256m
-            memory: 512Mi
+        - containerPort: 8080
+        env:
+        - name: AWS_ACCESS_KEY_ID
+          value: AWS_ACCESS_KEY_ID_VALUE
+        - name: AWS_SECRET_ACCESS_KEY
+          value: AWS_SECRET_ACCESS_KEY_VALUE

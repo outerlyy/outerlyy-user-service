@@ -19,6 +19,6 @@ spec:
             pathType: Exact
             backend:
               service:
-                name: outerlyy-user
+                name: outerlyy-user-service
                 port:
                   number: 80

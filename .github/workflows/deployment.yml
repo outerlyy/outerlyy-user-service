@@ -142,6 +142,9 @@ jobs:
           unzip awscliv2.zip
           sudo ./aws/install --update 
 
+          sed -i 's/AWS_ACCESS_KEY_ID_VALUE/${{ secrets.AWS_ACCESS_KEY_ID }}/' k8s/deployment.yaml
+          sed -i 's/AWS_SECRET_ACCESS_KEY_VALUE/${{ secrets.AWS_SECRET_ACCESS_KEY }}/' k8s/deployment.yaml
+
           if [ $BRANCH = dev ]; then
             echo "Development Configuration"
             aws eks update-kubeconfig --name outerlyy-dev --region  ${{ env.AWS_REGION }}
@@ -172,16 +175,14 @@ jobs:
           chmod +x kubectl
           sudo mv kubectl /usr/local/bin/
 
-      # - name: Kubectl
-      #   run: |
-      #     kubectl apply -f k8s/
-      #     kubectl get all
+      - name: Kubectl
+        run: |
+          kubectl apply -f k8s/
+          kubectl get all
          
-
-      
-      # - name: Delete Kubectl
-      #  # if: github.event.inputs.destroy == 'true'
-      #   id: destroy
-      #   run: |
-      #     kubectl delete -f k8s/
-      #     kubectl get all 
+      - name: Delete Kubectl
+       # if: github.event.inputs.destroy == 'true'
+        id: destroy
+        run: |
+          kubectl delete -f k8s/
+          kubectl get all 
